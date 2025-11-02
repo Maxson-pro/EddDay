@@ -27,9 +27,9 @@ public class HelloOP {
     @FXML
     void AllRecords(ActionEvent event) {
         try {
-                 Parent newView = FXMLLoader.load(getClass().getResource("hello-view.fxml"));
+            Parent newView = FXMLLoader.load(getClass().getResource("hello-view.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-               stage.setScene(new Scene(newView));
+            stage.setScene(new Scene(newView));
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
@@ -50,9 +50,9 @@ public class HelloOP {
     @FXML
     void showSearch(ActionEvent event) {
         try {
-                Parent newView = FXMLLoader.load(getClass().getResource("IscCon.fxml"));
+            Parent newView = FXMLLoader.load(getClass().getResource("IscCon.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-               stage.setScene(new Scene(newView));
+            stage.setScene(new Scene(newView));
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,7 +63,7 @@ public class HelloOP {
 
     }
     public void Del() {
-         conect.getChildren().clear();
+        conect.getChildren().clear();
     }
 
 }

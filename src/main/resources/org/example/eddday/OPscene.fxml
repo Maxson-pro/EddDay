@@ -6,22 +6,22 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.eddday.HelloOP">
-   <children>
-      <Button layoutX="243.0" layoutY="56.0" mnemonicParsing="false" onAction="#AllRecords" prefHeight="54.0" prefWidth="115.0" text="Все записи">
-         <font>
-            <Font name="Arial Black" size="14.0" />
-         </font>
-      </Button>
-      <Button layoutX="243.0" layoutY="173.0" mnemonicParsing="false" onAction="#showSearch" prefHeight="54.0" prefWidth="115.0" text="Найти по дате">
-         <font>
-            <Font name="Arial Black" size="12.0" />
-         </font>
-      </Button>
-      <Button layoutY="346.0" mnemonicParsing="false" onAction="#EX" prefHeight="54.0" prefWidth="115.0" text="EX" textFill="RED">
-         <font>
-            <Font name="Arial Black" size="24.0" />
-         </font>
-      </Button>
-      <StackPane fx:id="conect" onDragDetected="#Conect" prefHeight="54.0" prefWidth="115.0" />
-   </children>
+    <children>
+        <Button layoutX="243.0" layoutY="56.0" mnemonicParsing="false" onAction="#AllRecords" prefHeight="54.0" prefWidth="115.0" text="Все записи">
+            <font>
+                <Font name="Arial Black" size="14.0" />
+            </font>
+        </Button>
+        <Button layoutX="243.0" layoutY="173.0" mnemonicParsing="false" onAction="#showSearch" prefHeight="54.0" prefWidth="115.0" text="Найти по дате">
+            <font>
+                <Font name="Arial Black" size="12.0" />
+            </font>
+        </Button>
+        <Button layoutY="346.0" mnemonicParsing="false" onAction="#EX" prefHeight="54.0" prefWidth="115.0" text="EX" textFill="RED">
+            <font>
+                <Font name="Arial Black" size="24.0" />
+            </font>
+        </Button>
+        <StackPane fx:id="conect" onDragDetected="#Conect" prefHeight="54.0" prefWidth="115.0" />
+    </children>
 </AnchorPane>
