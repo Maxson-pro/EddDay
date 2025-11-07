@@ -1,14 +1,11 @@
 package org.example.eddday;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
@@ -17,9 +14,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,231 +21,177 @@ public class HelloController {
 
     @FXML
     private TabPane tabPane;
-    boolean isSearching = false;
 
-    String folder = "tabs/";
-    private final String jsonFilePath = "tabs/data.json";
     private final ObjectMapper mapper = new ObjectMapper();
 
     public static class TabData {
+        @JsonProperty
         public String name;
-         public String content;
+        @JsonProperty
+        public String content;
 
-        public TabData() {}
-
-        public TabData(String name, String content) {
-              this.name = name;
+        @JsonCreator
+        public TabData(@JsonProperty("name") String name, @JsonProperty("content") String content) {
+            this.name = name;
             this.content = content;
         }
     }
 
     public void initialize() {
-        createFolder();
-           loadTabs();
-           createTodayTabIfNot();
+        createFolderIfNotExists("tabs");
+        loadTabsFromFile("tabs/data.json");
+        addTodayTabIfNotExists();
     }
 
-    public void createFolder() {
-        File folderFile = new File(folder);
-          if (!folderFile.exists()) {
-            folderFile.mkdir();
+    private void addTodayTabIfNotExists() {
+        String today = java.time.LocalDate.now().toString();
+        if (findTabByName(today) == null) {
+            tabPane.getTabs().add(createTab(today, ""));
+            saveTabs();
         }
     }
 
-    public Tab findTabByName(String name) {
-        for (int i = 0; i < tabPane.getTabs().size(); i++) {
-               Tab tab = tabPane.getTabs().get(i);
-              if (tab.getText().equals(name)) {
-                return tab;
-            }
+    private void createFolderIfNotExists(String path) {
+        File dir = new File(path);
+        if (!dir.exists()) dir.mkdirs();
+    }
+
+    private Tab findTabByName(String name) {
+        for (Tab tab : tabPane.getTabs()) {
+            if (tab.getText().equals(name)) return tab;
         }
         return null;
     }
 
-    public Tab createTab(String name, String content) {
-         TextArea textArea = new TextArea(content);
-          Tab tab = new Tab();
-        tab.setText(name);
-           tab.setContent(textArea);
-        return tab;
+    private Tab createTab(String name, String content) {
+        TextArea ta = new TextArea(content);
+        return new Tab(name, ta);
     }
 
-    public void addTab() {
-//        if (isSearching) {
-//               showAlert("Нельзя добавлять вкладки во время поиска");
-//            return;
-//        }
-//
-//           String date = askUserForDate();
-//        if (date == null || !checkDateFormat(date))
-//            return;
-//        if (findTabByName(date) != null) {
-//            showAlert("Эта дата уже существует");
-//            return;
-//        }
-//        createFolderAndJsonForDay(date);
-//        Tab newTab = createTab(date, "");
-//           tabPane.getTabs().add(newTab);
-//        saveAllTabs();
-   }
-   public void createTodayTabIfNot() {
-        String today = LocalDate.now().toString();
-        if (findTabByName(today) == null) {
-            Tab todayTab = createTab(today, "");
-            tabPane.getTabs().add(todayTab);
-        }
-   }
-    private void createFolderAndJsonForDay(String date) {
-        String baseFolder = "tabs_days";
-        File mainFolder = new File(baseFolder);
-        if (!mainFolder.exists()) {
-            mainFolder.mkdir();
-        }
-
-        String dayFolderPath = baseFolder + "/" + date;
-        File dayFolder = new File(dayFolderPath);
-        if (!dayFolder.exists()) {
-            dayFolder.mkdir();
-        }
-        File jsonFile = new File(dayFolderPath + "/tabs.json");
-        if (!jsonFile.exists()) {
+    private void loadTabsFromFile(String filePath) {
+        File file = new File(filePath);
+        if (!file.exists() || file.length() == 0) {
             try {
-                jsonFile.createNewFile();
-                mapper.writeValue(jsonFile, new Object());
+                mapper.writeValue(file, new ArrayList<TabData>());
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    public String askUserForDate() {
-        TextInputDialog dialog = new TextInputDialog();
-          dialog.setTitle("Введите дату");
-        dialog.setHeaderText(null);
-           dialog.setContentText("Введите дату (ГГГГ-ММ-ДД):");
-        return dialog.showAndWait().orElse(null);
-    }
-
-    public boolean checkDateFormat(String date) {
-        try {
-            LocalDate.parse(date);
-              return true;
-        } catch (Exception e) {
-              showAlert("Некорректный формат даты");
-            return false;
-        }
-    }
-
-      public void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-           alert.setTitle("Предупреждение");
-        alert.setHeaderText(null);
-           alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    public void saveAllTabs() {
-        List<TabData> tabsData = new ArrayList<>();
-        for (Tab tab : tabPane.getTabs()) {
-            String name = tab.getText();
-            TextArea ta = (TextArea) tab.getContent();
-            String content = ta.getText();
-            tabsData.add(new TabData(name, content));
-        }
-        try {
-            mapper.writeValue(new File(jsonFilePath), tabsData);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    public void loadTabs() {
-        File jsonFile = new File(jsonFilePath);
-        if (!jsonFile.exists()) {
             return;
         }
         try {
-            JsonNode rootNode = mapper.readTree(jsonFile);
-            if (rootNode.isArray()) {
-                tabPane.getTabs().clear();
-                for (JsonNode node : rootNode) {
-                    String name = node.get("name").asText();
-                    String content = node.get("content").asText();
-                    Tab tab = createTab(name, content);
-                    tabPane.getTabs().add(tab);
+            List<TabData> data =
+                    mapper.readValue(file, mapper.getTypeFactory().constructCollectionType(List.class, TabData.class));
+            tabPane.getTabs().clear();
+            for (TabData tabData : data) {
+                if (findTabByName(tabData.name) == null) {
+                    tabPane.getTabs().add(createTab(tabData.name, tabData.content));
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private void saveTabs() {
+        List<TabData> allTabs = new ArrayList<>();
+        for (Tab tab : tabPane.getTabs()) {
+            TextArea ta = (TextArea) tab.getContent();
+            allTabs.add(new TabData(tab.getText(), ta.getText()));
+        }
+        try {
+            mapper.writeValue(new File("tabs/data.json"), allTabs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void Conect(MouseEvent mouseEvent) {
+        String targetTabText = "Название вкладки";
+        boolean found = false;
+        for (Tab tab : tabPane.getTabs()) {
+            if (tab.getText().equals(targetTabText)) {
+                tabPane.getSelectionModel().select(tab);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            System.out.println("Вкладка не найдена");
+        }
+    }
+    public void addTab(ActionEvent event) {
+        String tabName = "Новая вкладка " + (tabPane.getTabs().size() + 1);
+        tabPane.getTabs().add(createTab(tabName, ""));
+        saveTabs();
+    }
+
     public void deleteTab() {
-           Tab selected = tabPane.getSelectionModel().getSelectedItem();
+        Tab selected = tabPane.getSelectionModel().getSelectedItem();
         if (selected != null) {
-               deleteFile(selected.getText());
-            tabPane.getTabs().remove(selected);
-               saveAllTabs();
+            String name = selected.getText();
+            deleteTabByName(name);
+        } else {
+            showAlert("Нет выбранной вкладки");
         }
     }
 
-    public void deleteFile(String name) {
-        String filename = folder + name + ".txt";
-           File file = new File(filename);
-          if (file.exists()) {
-            file.delete();
+    public void deleteTabByName(String name) {
+        Tab tabToRemove = findTabByName(name);
+        if (tabToRemove != null) {
+            tabPane.getTabs().remove(tabToRemove);
+            saveTabs();
+        } else {
+            showAlert("Вкладка " + name + " не найдена");
         }
     }
-
+    public void Save(ActionEvent event) {
+        saveTabs();
+    }
     public void showOP(ActionEvent event) {
         try {
-               Parent newScene = FXMLLoader.load(getClass().getResource("OPscene.fxml"));
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-               stage.setScene(new Scene(newScene));
+            Parent scene = FXMLLoader.load(getClass().getResource("OPscene.fxml"));
+            Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(scene));
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
     public void EX(ActionEvent event) {
         System.exit(0);
     }
-
-    public void Save(ActionEvent event) {
-        saveAllTabs();
-    }
-
-    public void showTabByDate(String date) {
-        Tab tab = findTabByName(date);
-         if (tab != null) {
-            tabPane.getTabs().clear();
-             tabPane.getTabs().add(tab);
+    public void showTabByName(String name) {
+        Tab tab = findTabByName(name);
+        if (tab != null) {
             tabPane.getSelectionModel().select(tab);
         } else {
-            showAlert("Вкладка с этой датой не найдена");
+            showAlert("Вкладка " + name + " не найдена");
         }
     }
-
-     public void Conect(MouseEvent mouseEvent) {
-        String targetTabText = "Название вкладки";
-           boolean found = false;
-
-        for (Tab tab : tabPane.getTabs()) {
-                 if (tab.getText().equals(targetTabText)) {
-                tabPane.getSelectionModel().select(tab);
-                found = true;
-                 break;
-            }
-        }
-        if (!found) {
-             System.out.println("Вкладка не найдена");
+    public void showAllTabs() {
+        loadTabsFromFile("tabs/data.json");
+    }
+    public void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Ошибка");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    public void showTabByDate(String date) {
+        Tab tab = findTabByName(date);
+        if (tab != null) {
+            tabPane.getSelectionModel().select(tab);
+        } else {
+            showAlert("День " + date + " не найден");
         }
     }
-
-           public void startSearch() {
-        isSearching = true;
-    }
-
-    public void endSearch() {
-        isSearching = false;
+    public void deleteCurrentTab() {
+        Tab selected = tabPane.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            String name = selected.getText();
+            deleteTabByName(name);
+        } else {
+            showAlert("Нет выбранной вкладки");
+        }
     }
 }

@@ -53,7 +53,7 @@ public class IscatCon {
             showAlert("Используете формат ГГГГ-MM-ДД c тире и цифрами!!!!");
             return false;
         }
-            String[] par = dateStr.split("-");
+        String[] par = dateStr.split("-");
         int year, month, day;
         try {
             year = Integer.parseInt(par[0]);
@@ -75,22 +75,23 @@ public class IscatCon {
 
         return true;
     }
-        private int getMAXIM_Day(int year, int month) {
-            switch (month) {
-                case 1: case 3: case 5: case 7: case 8: case 10: case 12:
-                    return 31;
-                case 4: case 6: case 9: case 11:
-                    return 30;
-                case 2:
-                    return (isLeapYear(year)) ? 29 : 28;
-                default:
-                    return 0;
-            }
+    private int getMAXIM_Day(int year, int month) {
+        switch (month) {
+            case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+                return 31;
+            case 4: case 6: case 9: case 11:
+                return 30;
+            case 2:
+                return (isLeapYear(year)) ? 29 : 28;
+            default:
+                return 0;
         }
+    }
 
-        private boolean isLeapYear(int year) {
-            return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-        }
+    private boolean isLeapYear(int year) {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    }
+
 
 
     private void showAlert(String message) {

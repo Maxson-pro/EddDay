@@ -7,7 +7,6 @@ module org.example.eddday {
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
 
-
-    opens org.example.eddday to javafx.fxml;
+    opens org.example.eddday to javafx.fxml, com.fasterxml.jackson.databind;
     exports org.example.eddday;
 }
