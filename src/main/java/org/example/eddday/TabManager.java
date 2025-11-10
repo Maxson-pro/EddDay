@@ -1,87 +1,136 @@
 package org.example.eddday;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.File;
-import java.io.IOException;
-import java.time.LocalDate;
+import java.util.Optional;
 
 public class TabManager {
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final javafx.scene.control.TabPane tabPane;
-
-    public TabManager(javafx.scene.control.TabPane tabPane) {
+    private TabPane tabPane;
+    private static final String JsonF = "texts";
+    public TabManager(TabPane tabPane) {
         this.tabPane = tabPane;
     }
-
     public void loadTabsFromJsonFiles() {
-        File folder = new File(FolderManager.TEXT);
-        File[] files = folder.listFiles((dir, name) -> name.endsWith(".json"));
-        if (files == null) return;
-        for (File f : files) {
-            try {
-                TabData data = mapper.readValue(f, TabData.class);
-                if (findTabByName(data.name) == null) {
-                    tabPane.getTabs().add(createTab(data.name, data.content));
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+        try {
+            File folder = new File(JsonF);
+            if (!folder.exists()) {
+                folder.mkdirs();
             }
+            File[] files = folder.listFiles((dir, name) -> name.endsWith(".json"));
+            if (files != null) {
+                for (File file : files) {
+                    loadTabFromJsonFile(file);
+                }
+            }
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при загрузке вкладок: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
-    public void addTodayTabIfNotExists() {
-        String today = LocalDate.now().toString();
-        if (findTabByName(today) == null) {
-            tabPane.getTabs().add(createTab(today, ""));
+    public void loadTabFromJsonFile(File file) {
+        if (file.length() == 0) {
+            return;
         }
-    }
-
-    public Tab createTab(String name, String content) {
-        TextArea ta = new TextArea(content);
-        ta.textProperty().addListener((obs, old, neu) -> {
-            Tab t = findTabByName(name);
-            if (t != null) saveTabToJsonFile(t);
-        });
-        return new Tab(name, ta);
-    }
-
-    public Tab findTabByName(String name) {
-        for (Tab t : tabPane.getTabs()) {
-            if (t.getText().equals(name)) return t;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            TabData tabData = mapper.readValue(file, TabData.class);
+            createTabFromData(tabData);
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при чтении файла " + file.getName() + ": " + e.getMessage());
         }
-        return null;
     }
 
     public void saveTabToJsonFile(Tab tab) {
-        String filename = FolderManager.TEXT + "/" + tab.getText() + ".json";
-        TextArea ta = (TextArea) tab.getContent();
-        TabData data = new TabData(tab.getText(), ta.getText());
         try {
+            String tabName = tab.getText();
+            String filename = JsonF + File.separator + tabName + ".json";
+            ObjectMapper mapper = new ObjectMapper();
+            String content = "";
+            if (tab.getContent() instanceof TextArea) {
+                content = ((TextArea) tab.getContent()).getText();
+            }
+            TabData data = new TabData(tabName, content);
             mapper.writeValue(new File(filename), data);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при сохранении вкладки " + tab.getText() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public void deleteTabByName(String name) {
-        Tab tab = findTabByName(name);
-        if (tab != null) {
-            tabPane.getTabs().remove(tab);
-            File file = new File(FolderManager.TEXT + "/" + name + ".json");
-            if (file.exists()) file.delete();
+        try {
+            for (Tab tab : tabPane.getTabs()) {
+                if (tab.getText().equals(name)) {
+                    tabPane.getTabs().remove(tab);
+                    deleteJsonFile(name);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при удалении вкладки " + name + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void addTodayTabIfNotExists() {
+        try {
+            String today = java.time.LocalDate.now().toString();
+            Optional<Tab> existingTab = tabPane.getTabs().stream()
+                    .filter(t -> t.getText().equals(today))
+                    .findFirst();
+            if (!existingTab.isPresent()) {
+                Tab newTab = new Tab();
+                newTab.setText(today);
+                TextArea contentArea = new TextArea();
+                newTab.setContent(contentArea);
+                tabPane.getTabs().add(newTab);
+            }
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при добавлении вкладки за сегодня: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteJsonFile(String tabName) {
+        try {
+            String filename = JsonF + File.separator + tabName + ".json";
+            File file = new File(filename);
+            if (file.exists()) {
+                file.delete();
+            }
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при удалении файла вкладки " + tabName + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void createTabFromData(TabData data) {
+        try {
+            Tab newTab = new Tab();
+            newTab.setText(data.name);
+            TextArea contentArea = new TextArea(data.content);
+            newTab.setContent(contentArea);
+            tabPane.getTabs().add(newTab);
+        } catch (Exception e) {
+            AlertUtils.showAlert("Ошибка при создании вкладки из данных: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     public static class TabData {
+        @JsonProperty
         public String name;
+        @JsonProperty
         public String content;
 
-        public TabData() {}
-
-        public TabData(String name, String content) {
+        @JsonCreator
+        public TabData(@JsonProperty("name") String name, @JsonProperty("content") String content) {
             this.name = name;
             this.content = content;
         }

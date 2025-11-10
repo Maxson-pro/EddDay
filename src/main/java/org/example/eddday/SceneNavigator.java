@@ -16,6 +16,7 @@ public class SceneNavigator {
             stage.setScene(new Scene(newView));
             stage.show();
         } catch (IOException e) {
+            AlertUtils.showAlert("Не удалось загрузить сцену: " + fxmlFile);
             e.printStackTrace();
         }
     }
