@@ -7,16 +7,17 @@ import javafx.stage.Stage;
 import javafx.scene.Node;
 import javafx.event.ActionEvent;
 import java.io.IOException;
+import java.util.Objects;
 
 public class SceneNavigator {
     public static void switchScene(ActionEvent event, String fxmlFile) {
         try {
-            Parent newView = FXMLLoader.load(SceneNavigator.class.getResource(fxmlFile));
+            Parent newView = FXMLLoader.load(Objects.requireNonNull(SceneNavigator.class.getResource(fxmlFile)));
             Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(newView));
             stage.show();
         } catch (IOException e) {
-            AlertUtils.showAlert("Не удалось загрузить сцену: " + fxmlFile);
+            AlertUtils.showAlert("Не удалось загрузить сперму: " + fxmlFile);
             e.printStackTrace();
         }
     }

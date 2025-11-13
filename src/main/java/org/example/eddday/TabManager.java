@@ -4,28 +4,31 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.File;
-import java.util.Optional;
+import java.io.IOException;
 
 public class TabManager {
     private TabPane tabPane;
-    private static final String JsonF = "texts";
+    private static final String JsonFolderPath = "texts";
+
     public TabManager(TabPane tabPane) {
         this.tabPane = tabPane;
     }
+
     public void loadTabsFromJsonFiles() {
         try {
-            File folder = new File(JsonF);
+            File folder = new File(JsonFolderPath);
             if (!folder.exists()) {
                 folder.mkdirs();
             }
-            File[] files = folder.listFiles((dir, name) -> name.endsWith(".json"));
+            File[] files = folder.listFiles();
             if (files != null) {
-                for (File file : files) {
-                    loadTabFromJsonFile(file);
+                for (int i = 0; i < files.length; i++) {
+                    File file = files[i];
+                    if (file.getName().endsWith(".json")) {
+                        loadTabFromJsonFile(file);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -33,6 +36,7 @@ public class TabManager {
             e.printStackTrace();
         }
     }
+
     public void loadTabFromJsonFile(File file) {
         if (file.length() == 0) {
             return;
@@ -49,7 +53,7 @@ public class TabManager {
     public void saveTabToJsonFile(Tab tab) {
         try {
             String tabName = tab.getText();
-            String filename = JsonF + File.separator + tabName + ".json";
+            String filename = JsonFolderPath + File.separator + tabName + ".json";
             ObjectMapper mapper = new ObjectMapper();
             String content = "";
             if (tab.getContent() instanceof TextArea) {
@@ -65,9 +69,10 @@ public class TabManager {
 
     public void deleteTabByName(String name) {
         try {
-            for (Tab tab : tabPane.getTabs()) {
+            for (int i = 0; i < tabPane.getTabs().size(); i++) {
+                Tab tab = tabPane.getTabs().get(i);
                 if (tab.getText().equals(name)) {
-                    tabPane.getTabs().remove(tab);
+                    tabPane.getTabs().remove(i);
                     deleteJsonFile(name);
                     break;
                 }
@@ -81,10 +86,14 @@ public class TabManager {
     public void addTodayTabIfNotExists() {
         try {
             String today = java.time.LocalDate.now().toString();
-            Optional<Tab> existingTab = tabPane.getTabs().stream()
-                    .filter(t -> t.getText().equals(today))
-                    .findFirst();
-            if (!existingTab.isPresent()) {
+            boolean exists = false;
+            for (int i = 0; i < tabPane.getTabs().size(); i++) {
+                if (tabPane.getTabs().get(i).getText().equals(today)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
                 Tab newTab = new Tab();
                 newTab.setText(today);
                 TextArea contentArea = new TextArea();
@@ -99,7 +108,7 @@ public class TabManager {
 
     private void deleteJsonFile(String tabName) {
         try {
-            String filename = JsonF + File.separator + tabName + ".json";
+            String filename = JsonFolderPath + File.separator + tabName + ".json";
             File file = new File(filename);
             if (file.exists()) {
                 file.delete();
@@ -122,15 +131,15 @@ public class TabManager {
             e.printStackTrace();
         }
     }
-
+    
     public static class TabData {
-        @JsonProperty
         public String name;
-        @JsonProperty
         public String content;
 
-        @JsonCreator
-        public TabData(@JsonProperty("name") String name, @JsonProperty("content") String content) {
+        public TabData() {
+        }
+
+        public TabData(String name, String content) {
             this.name = name;
             this.content = content;
         }

@@ -15,18 +15,18 @@ public class FolderManager {
     }
 
     public static void startFolderMonitoring() {
-        Thread t = new Thread(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    File folder = new File(TEXT);
+                    if (!folder.exists()) folder.mkdirs();
                 }
-                File folder = new File(TEXT);
-                if (!folder.exists()) folder.mkdirs();
             }
         });
-        t.setDaemon(true);
-        t.start();
     }
 }
