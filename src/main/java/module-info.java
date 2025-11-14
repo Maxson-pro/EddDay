@@ -6,6 +6,7 @@ module org.example.eddday {
     requires com.google.gson;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
+    requires javafx.swing;
 
     opens org.example.eddday to javafx.fxml, com.fasterxml.jackson.databind;
     exports org.example.eddday;
